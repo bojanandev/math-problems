@@ -240,6 +240,45 @@
       color: #fff;
       font-weight: 600;
     }
+
+    .history-section {
+      margin-top: 2rem;
+      text-align: center;
+    }
+
+    .history-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1.5px solid #ccc;
+      background: #fff;
+      color: #555;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .history-btn:hover {
+      background: #f0f0f0;
+    }
+
+    .history-list {
+      list-style: none;
+      padding: 0;
+      margin-top: 1rem;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .history-list li {
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin-bottom: 4px;
+      text-align: left;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
@@ -294,6 +333,11 @@
     <div class="feedback" id="feedback"></div>
     <button class="next-btn" id="next-btn" onclick="newProblem()">Next problem →</button>
   </div>
+
+  <div class="history-section">
+    <button class="history-btn" onclick="toggleHistory()">Last 10 <span id="history-score"></span></button>
+    <ul id="history-list" class="history-list" style="display: none;"></ul>
+  </div>
 </div>
 
 <script>
@@ -316,7 +360,11 @@
       next: 'Next problem →',
       typeNumber: 'Type a number first!',
       correctMsgs: ['Great job! 🎉', 'Correct! ✓', 'Awesome! ⭐', 'You got it! 🌟'],
-      wrongMsg: 'Not quite — the answer is {answer}. Keep trying!'
+      wrongMsg: 'Not quite — the answer is {answer}. Keep trying!',
+      history: 'History',
+      noHistory: 'No problems solved yet.',
+      lastTen: 'Last 10',
+      scoreText: 'Score: {correct}/{total}'
     },
     mk: {
       title: '🧮 Математички проблеми',
@@ -336,11 +384,16 @@
       next: 'Следен проблем →',
       typeNumber: 'Прво внесете број!',
       correctMsgs: ['Одлично! 🎉', 'Точно! ✓', 'Фантастично! ⭐', 'Го доби! 🌟'],
-      wrongMsg: 'Не баш — одговорот е {answer}. Продолжи да пробуваш!'
+      wrongMsg: 'Не баш — одговорот е {answer}. Продолжи да пробуваш!',
+      history: 'Историја',
+      noHistory: 'Сè уште нема решени проблеми.',
+      lastTen: 'Последни 10',
+      scoreText: 'Резултат: {correct}/{total}'
     }
   };
 
   let currentLang = 'en';
+  let history = JSON.parse(localStorage.getItem('mathProblemsHistory') || '[]');
   let correct = 0, total = 0, streak = 0;
   let currentAnswer = 0;
   let activeTopics = new Set(['add', 'sub', 'mul', 'div']);
@@ -407,29 +460,67 @@
     document.querySelectorAll('.score-label')[2].textContent = t.streak;
     document.querySelector('.check-btn').textContent = t.check;
     document.querySelector('.next-btn').textContent = t.next;
+    document.querySelector('.history-btn').innerHTML = t.lastTen + ' <span id="history-score"></span>';
+    updateHistoryDisplay();
+  }
+
+  function updateHistoryDisplay() {
+    const t = translations[currentLang];
+    const historyList = document.getElementById('history-list');
+    historyList.innerHTML = '';
+    const total = history.length;
+    const correct = history.filter(h => h.result === true).length;
+    const scoreText = total > 0 ? ` (${correct}/${total})` : '';
+    document.getElementById('history-score').textContent = scoreText;
+
+    if (history.length === 0) {
+      historyList.innerHTML = '<li>' + t.noHistory + '</li>';
+    } else {
+      const fullScoreText = t.scoreText.replace('{correct}', correct).replace('{total}', total);
+      const scoreLi = document.createElement('li');
+      scoreLi.textContent = fullScoreText;
+      scoreLi.style.fontWeight = 'bold';
+      scoreLi.style.textAlign = 'center';
+      historyList.appendChild(scoreLi);
+
+      history.slice().reverse().forEach(item => {
+        const li = document.createElement('li');
+        const resultIcon = item.result === null ? '⏳' : item.result ? '✅' : '❌';
+        li.textContent = resultIcon + ' ' + item.question + ' = ' + item.answer;
+        historyList.appendChild(li);
+      });
+    }
+  }
+
+  function toggleHistory() {
+    const list = document.getElementById('history-list');
+    list.style.display = list.style.display === 'none' ? 'block' : 'none';
   }
 
   function newProblem() {
     answered = false;
     const topics = [...activeTopics];
     const topic = topics[Math.floor(Math.random() * topics.length)];
-    let a, b, q;
+    let a, b, q, baseQuestion;
 
     if (topic === 'add') {
       a = randNum(); b = randNum();
-      q = a + ' + ' + b + ' = ?';
+      baseQuestion = a + ' + ' + b;
+      q = baseQuestion + ' = ?';
       currentAnswer = a + b;
     } else if (topic === 'sub') {
       a = randNum(); b = randNum();
       if (b > a) { let tmp = a; a = b; b = tmp; }
       if (a === b) a++;
-      q = a + ' − ' + b + ' = ?';
+      baseQuestion = a + ' − ' + b;
+      q = baseQuestion + ' = ?';
       currentAnswer = a - b;
     } else if (topic === 'mul') {
       a = digitMode === 'double' ? Math.floor(Math.random() * 11) + 2 : Math.floor(Math.random() * 9) + 1;
       b = digitMode === 'double' ? Math.floor(Math.random() * 11) + 2 : Math.floor(Math.random() * 9) + 1;
       if (digitMode === 'both' && Math.random() < 0.5) a = Math.floor(Math.random() * 90) + 10;
-      q = a + ' × ' + b + ' = ?';
+      baseQuestion = a + ' × ' + b;
+      q = baseQuestion + ' = ?';
       currentAnswer = a * b;
     } else {
       const maxDiv = digitMode === 'double' ? 11 : 9;
@@ -437,7 +528,8 @@
       const divisor = Math.floor(Math.random() * maxDiv) + 2;
       const ans = Math.floor(Math.random() * maxAns) + 1;
       a = divisor * ans;
-      q = a + ' ÷ ' + divisor + ' = ?';
+      baseQuestion = a + ' ÷ ' + divisor;
+      q = baseQuestion + ' = ?';
       currentAnswer = ans;
     }
 
@@ -447,6 +539,18 @@
     document.getElementById('feedback').className = 'feedback';
     document.getElementById('next-btn').style.display = 'none';
     document.getElementById('answer-input').focus();
+
+    // Add to history
+    history.push({
+      question: baseQuestion,
+      answer: currentAnswer,
+      topic: topic,
+      digitMode: digitMode,
+      timestamp: Date.now(),
+      result: null
+    });
+    if (history.length > 10) history.shift();
+    localStorage.setItem('mathProblemsHistory', JSON.stringify(history));
   }
 
   function checkAnswer() {
@@ -461,7 +565,8 @@
 
     const fb = document.getElementById('feedback');
     const t = translations[currentLang];
-    if (val === currentAnswer) {
+    const isCorrect = val === currentAnswer;
+    if (isCorrect) {
       correct++;
       streak++;
       const msgs = t.correctMsgs;
@@ -473,6 +578,13 @@
       fb.className = 'feedback wrong';
     }
 
+    // Update history result
+    if (history.length > 0) {
+      history[history.length - 1].result = isCorrect;
+      localStorage.setItem('mathProblemsHistory', JSON.stringify(history));
+      updateHistoryDisplay();
+    }
+
     document.getElementById('score').textContent = correct;
     document.getElementById('attempted').textContent = total;
     document.getElementById('streak').textContent = streak + ' ⭐';
@@ -481,6 +593,7 @@
 
   newProblem();
   updateTexts();
+  updateHistoryDisplay();
 </script>
 </body>
 </html>
