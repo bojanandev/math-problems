@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Math Problem Generator</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #f0f4f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 520px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 26px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 1.75rem;
+    }
+
+    .topic-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+      justify-content: center;
+    }
+
+    .topic-btn {
+      padding: 8px 18px;
+      border-radius: 99px;
+      border: 1.5px solid #ccc;
+      background: #fff;
+      color: #555;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .topic-btn.active {
+      background: #1D9E75;
+      border-color: #1D9E75;
+      color: #fff;
+    }
+
+    .score-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 1.5rem;
+    }
+
+    .score-card {
+      flex: 1;
+      background: #fff;
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+      border: 1px solid #e5e5e5;
+    }
+
+    .score-label {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 4px;
+    }
+
+    .score-val {
+      font-size: 22px;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    .score-val.green { color: #0F6E56; }
+
+    .problem-card {
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 16px;
+      padding: 2.5rem 1.5rem 2rem;
+      text-align: center;
+    }
+
+    .problem-text {
+      font-size: 40px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 1.75rem;
+      letter-spacing: -0.5px;
+    }
+
+    .answer-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .answer-row input {
+      width: 96px;
+      font-size: 22px;
+      text-align: center;
+      padding: 10px 0;
+      border: 1.5px solid #ccc;
+      border-radius: 10px;
+      background: #f9f9f9;
+      color: #1a1a1a;
+      outline: none;
+      transition: box-shadow 0.15s, border-color 0.15s;
+    }
+
+    .answer-row input:focus {
+      border-color: #1D9E75;
+      box-shadow: 0 0 0 3px rgba(29, 158, 117, 0.15);
+    }
+
+    .check-btn {
+      padding: 10px 24px;
+      font-size: 15px;
+      border-radius: 10px;
+      border: none;
+      background: #1D9E75;
+      color: #fff;
+      cursor: pointer;
+      font-weight: 600;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    .check-btn:hover { opacity: 0.88; }
+    .check-btn:active { transform: scale(0.97); }
+
+    .feedback {
+      font-size: 15px;
+      font-weight: 600;
+      margin-top: 1.25rem;
+      min-height: 24px;
+    }
+
+    .feedback.correct { color: #0F6E56; }
+    .feedback.wrong   { color: #993C1D; }
+
+    .next-btn {
+      margin-top: 1.25rem;
+      padding: 10px 28px;
+      font-size: 14px;
+      border-radius: 10px;
+      background: transparent;
+      border: 1.5px solid #ccc;
+      color: #555;
+      cursor: pointer;
+      transition: background 0.15s;
+      display: none;
+    }
+
+    .digit-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 1.5rem;
+      justify-content: center;
+    }
+
+    .digit-label {
+      font-size: 14px;
+      color: #888;
+    }
+
+    .digit-toggle {
+      display: flex;
+      background: #fff;
+      border: 1.5px solid #ccc;
+      border-radius: 99px;
+      padding: 3px;
+      gap: 3px;
+    }
+
+    .digit-btn {
+      padding: 6px 16px;
+      border-radius: 99px;
+      border: none;
+      background: transparent;
+      color: #555;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .digit-btn.active {
+      background: #1D9E75;
+      color: #fff;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <h1>🧮 Math Problems</h1>
+
+  <div class="topic-row" id="topics">
+    <button class="topic-btn active" data-topic="add">+ Addition</button>
+    <button class="topic-btn active" data-topic="sub">− Subtraction</button>
+    <button class="topic-btn active" data-topic="mul">× Multiplication</button>
+    <button class="topic-btn active" data-topic="div">÷ Division</button>
+  </div>
+
+  <div class="digit-row">
+    <span class="digit-label">Number size:</span>
+    <div class="digit-toggle">
+      <button class="digit-btn active" data-digit="single">1–9</button>
+      <button class="digit-btn" data-digit="double">10–99</button>
+      <button class="digit-btn" data-digit="both">Both</button>
+    </div>
+  </div>
+
+    </div>
+
+  <div class="score-row">
+    <div class="score-card">
+      <div class="score-label">Score</div>
+      <div class="score-val green" id="score">0</div>
+    </div>
+    <div class="score-card">
+      <div class="score-label">Attempted</div>
+      <div class="score-val" id="attempted">0</div>
+    </div>
+    <div class="score-card">
+      <div class="score-label">Streak</div>
+      <div class="score-val" id="streak">0 ⭐</div>
+    </div>
+  </div>
+
+  <div class="problem-card">
+    <div class="problem-text" id="problem">?</div>
+    <div class="answer-row">
+      <input type="number" id="answer-input" placeholder="?" autocomplete="off" />
+      <button class="check-btn" onclick="checkAnswer()">Check</button>
+    </div>
+    <div class="feedback" id="feedback"></div>
+    <button class="next-btn" id="next-btn" onclick="newProblem()">Next problem →</button>
+  </div>
+</div>
+
+<script>
+  let correct = 0, total = 0, streak = 0;
+  let currentAnswer = 0;
+  let activeTopics = new Set(['add', 'sub', 'mul', 'div']);
+  let digitMode = 'single';
+  let answered = false;
+
+  document.querySelectorAll('.topic-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const t = btn.dataset.topic;
+      if (activeTopics.has(t)) {
+        if (activeTopics.size > 1) { activeTopics.delete(t); btn.classList.remove('active'); }
+      } else { activeTopics.add(t); btn.classList.add('active'); }
+      newProblem();
+    });
+  });
+
+  document.querySelectorAll('.digit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.digit-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      digitMode = btn.dataset.digit;
+      newProblem();
+    });
+  });
+
+  document.getElementById('answer-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      if (answered) newProblem();
+      else checkAnswer();
+    }
+  });
+
+  function randNum() {
+    if (digitMode === 'single') return Math.floor(Math.random() * 9) + 1;
+    if (digitMode === 'double') return Math.floor(Math.random() * 90) + 10;
+    return Math.random() < 0.5 ? Math.floor(Math.random() * 9) + 1 : Math.floor(Math.random() * 90) + 10;
+  }
+
+  function newProblem() {
+    answered = false;
+    const topics = [...activeTopics];
+    const topic = topics[Math.floor(Math.random() * topics.length)];
+    let a, b, q;
+
+    if (topic === 'add') {
+      a = randNum(); b = randNum();
+      q = a + ' + ' + b + ' = ?';
+      currentAnswer = a + b;
+    } else if (topic === 'sub') {
+      a = randNum(); b = randNum();
+      if (b > a) { let tmp = a; a = b; b = tmp; }
+      if (a === b) a++;
+      q = a + ' − ' + b + ' = ?';
+      currentAnswer = a - b;
+    } else if (topic === 'mul') {
+      a = digitMode === 'double' ? Math.floor(Math.random() * 11) + 2 : Math.floor(Math.random() * 9) + 1;
+      b = digitMode === 'double' ? Math.floor(Math.random() * 11) + 2 : Math.floor(Math.random() * 9) + 1;
+      if (digitMode === 'both' && Math.random() < 0.5) a = Math.floor(Math.random() * 90) + 10;
+      q = a + ' × ' + b + ' = ?';
+      currentAnswer = a * b;
+    } else {
+      const maxDiv = digitMode === 'double' ? 11 : 9;
+      const maxAns = digitMode === 'double' ? 12 : 9;
+      const divisor = Math.floor(Math.random() * maxDiv) + 2;
+      const ans = Math.floor(Math.random() * maxAns) + 1;
+      a = divisor * ans;
+      q = a + ' ÷ ' + divisor + ' = ?';
+      currentAnswer = ans;
+    }
+
+    document.getElementById('problem').textContent = q;
+    document.getElementById('answer-input').value = '';
+    document.getElementById('feedback').textContent = '';
+    document.getElementById('feedback').className = 'feedback';
+    document.getElementById('next-btn').style.display = 'none';
+    document.getElementById('answer-input').focus();
+  }
+
+  function checkAnswer() {
+    if (answered) return;
+    const val = parseInt(document.getElementById('answer-input').value, 10);
+    if (isNaN(val)) {
+      document.getElementById('feedback').textContent = 'Type a number first!';
+      return;
+    }
+    answered = true;
+    total++;
+
+    const fb = document.getElementById('feedback');
+    if (val === currentAnswer) {
+      correct++;
+      streak++;
+      const msgs = ['Great job! 🎉', 'Correct! ✓', 'Awesome! ⭐', 'You got it! 🌟'];
+      fb.textContent = msgs[Math.floor(Math.random() * msgs.length)];
+      fb.className = 'feedback correct';
+    } else {
+      streak = 0;
+      fb.textContent = 'Not quite — the answer is ' + currentAnswer + '. Keep trying!';
+      fb.className = 'feedback wrong';
+    }
+
+    document.getElementById('score').textContent = correct;
+    document.getElementById('attempted').textContent = total;
+    document.getElementById('streak').textContent = streak + ' ⭐';
+    document.getElementById('next-btn').style.display = 'inline-block';
+  }
+
+  newProblem();
+</script>
+</body>
+</html>
