@@ -241,6 +241,45 @@
       font-weight: 600;
     }
 
+    .diff-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 1.5rem;
+      justify-content: center;
+    }
+
+    .diff-label {
+      font-size: 14px;
+      color: #888;
+    }
+
+    .diff-toggle {
+      display: flex;
+      background: #fff;
+      border: 1.5px solid #ccc;
+      border-radius: 99px;
+      padding: 3px;
+      gap: 3px;
+    }
+
+    .diff-btn {
+      padding: 6px 16px;
+      border-radius: 99px;
+      border: none;
+      background: transparent;
+      color: #555;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .diff-btn.active {
+      background: #1D9E75;
+      color: #fff;
+      font-weight: 600;
+    }
+
     .history-section {
       margin-top: 2rem;
       text-align: center;
@@ -290,6 +329,14 @@
     <div class="lang-toggle">
       <button class="lang-btn active" data-lang="en">EN</button>
       <button class="lang-btn" data-lang="mk">MK</button>
+    </div>
+  </div>
+
+  <div class="diff-row">
+    <span class="diff-label">Difficulty:</span>
+    <div class="diff-toggle">
+      <button class="diff-btn active" data-diff="beginner">Beginner</button>
+      <button class="diff-btn" data-diff="advanced">Advanced</button>
     </div>
   </div>
 
@@ -345,6 +392,9 @@
     en: {
       title: '🧮 Math Problems',
       langLabel: 'Language:',
+      diffLabel: 'Difficulty:',
+      beginner: 'Beginner',
+      advanced: 'Advanced',
       add: '+ Addition',
       sub: '− Subtraction',
       mul: '× Multiplication',
@@ -369,6 +419,9 @@
     mk: {
       title: '🧮 Математички проблеми',
       langLabel: 'Јазик:',
+      diffLabel: 'Тежина:',
+      beginner: 'Почетник',
+      advanced: 'Напреден',
       add: '+ Собирање',
       sub: '− Одземање',
       mul: '× Множење',
@@ -393,6 +446,7 @@
   };
 
   let currentLang = 'en';
+  let currentDifficulty = 'advanced';
   let history = JSON.parse(localStorage.getItem('mathProblemsHistory') || '[]');
   let correct = 0, total = 0, streak = 0;
   let currentAnswer = 0;
@@ -429,6 +483,15 @@
     });
   });
 
+  document.querySelectorAll('.diff-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentDifficulty = btn.dataset.diff;
+      newProblem();
+    });
+  });
+
   document.getElementById('answer-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') {
       if (answered) newProblem();
@@ -447,6 +510,9 @@
     document.title = t.title;
     document.querySelector('h1').textContent = t.title;
     document.querySelector('.lang-label').textContent = t.langLabel;
+    document.querySelector('.diff-label').textContent = t.diffLabel;
+    document.querySelector('[data-diff="beginner"]').textContent = t.beginner;
+    document.querySelector('[data-diff="advanced"]').textContent = t.advanced;
     document.querySelector('[data-topic="add"]').innerHTML = t.add;
     document.querySelector('[data-topic="sub"]').innerHTML = t.sub;
     document.querySelector('[data-topic="mul"]').innerHTML = t.mul;
@@ -503,34 +569,60 @@
     const topic = topics[Math.floor(Math.random() * topics.length)];
     let a, b, q, baseQuestion;
 
+    const specials = [2, 4, 5, 10];
+
     if (topic === 'add') {
-      a = randNum(); b = randNum();
+      if (currentDifficulty === 'beginner') {
+        a = Math.floor(Math.random() * 50) + 1;
+        b = Math.floor(Math.random() * (100 - a)) + 1;
+      } else {
+        a = randNum(); b = randNum();
+      }
       baseQuestion = a + ' + ' + b;
       q = baseQuestion + ' = ?';
       currentAnswer = a + b;
     } else if (topic === 'sub') {
-      a = randNum(); b = randNum();
-      if (b > a) { let tmp = a; a = b; b = tmp; }
+      if (currentDifficulty === 'beginner') {
+        a = Math.floor(Math.random() * 50) + 1;
+        b = Math.floor(Math.random() * a) + 1;
+      } else {
+        a = randNum(); b = randNum();
+        if (b > a) { let tmp = a; a = b; b = tmp; }
+      }
       if (a === b) a++;
       baseQuestion = a + ' − ' + b;
       q = baseQuestion + ' = ?';
       currentAnswer = a - b;
     } else if (topic === 'mul') {
-      a = digitMode === 'double' ? Math.floor(Math.random() * 11) + 2 : Math.floor(Math.random() * 9) + 1;
-      b = digitMode === 'double' ? Math.floor(Math.random() * 11) + 2 : Math.floor(Math.random() * 9) + 1;
-      if (digitMode === 'both' && Math.random() < 0.5) a = Math.floor(Math.random() * 90) + 10;
+      if (currentDifficulty === 'beginner') {
+        a = specials[Math.floor(Math.random() * specials.length)];
+        b = Math.floor(Math.random() * 10) + 1;
+      } else {
+        a = digitMode === 'double' ? Math.floor(Math.random() * 11) + 2 : Math.floor(Math.random() * 9) + 1;
+        b = digitMode === 'double' ? Math.floor(Math.random() * 11) + 2 : Math.floor(Math.random() * 9) + 1;
+        if (digitMode === 'both' && Math.random() < 0.5) a = Math.floor(Math.random() * 90) + 10;
+      }
       baseQuestion = a + ' × ' + b;
       q = baseQuestion + ' = ?';
       currentAnswer = a * b;
     } else {
-      const maxDiv = digitMode === 'double' ? 11 : 9;
-      const maxAns = digitMode === 'double' ? 12 : 9;
-      const divisor = Math.floor(Math.random() * maxDiv) + 2;
-      const ans = Math.floor(Math.random() * maxAns) + 1;
-      a = divisor * ans;
-      baseQuestion = a + ' ÷ ' + divisor;
-      q = baseQuestion + ' = ?';
-      currentAnswer = ans;
+      if (currentDifficulty === 'beginner') {
+        const divisor = specials[Math.floor(Math.random() * specials.length)];
+        const ans = Math.floor(Math.random() * 10) + 1;
+        a = divisor * ans;
+        baseQuestion = a + ' ÷ ' + divisor;
+        q = baseQuestion + ' = ?';
+        currentAnswer = ans;
+      } else {
+        const maxDiv = digitMode === 'double' ? 11 : 9;
+        const maxAns = digitMode === 'double' ? 12 : 9;
+        const divisor = Math.floor(Math.random() * maxDiv) + 2;
+        const ans = Math.floor(Math.random() * maxAns) + 1;
+        a = divisor * ans;
+        baseQuestion = a + ' ÷ ' + divisor;
+        q = baseQuestion + ' = ?';
+        currentAnswer = ans;
+      }
     }
 
     document.getElementById('problem').textContent = q;
