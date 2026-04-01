@@ -201,11 +201,57 @@
       color: #fff;
       font-weight: 600;
     }
-  </style>
+
+    .lang-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 1.5rem;
+      justify-content: center;
+    }
+
+    .lang-label {
+      font-size: 14px;
+      color: #888;
+    }
+
+    .lang-toggle {
+      display: flex;
+      background: #fff;
+      border: 1.5px solid #ccc;
+      border-radius: 99px;
+      padding: 3px;
+      gap: 3px;
+    }
+
+    .lang-btn {
+      padding: 6px 16px;
+      border-radius: 99px;
+      border: none;
+      background: transparent;
+      color: #555;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .lang-btn.active {
+      background: #1D9E75;
+      color: #fff;
+      font-weight: 600;
+    }
 </head>
 <body>
 <div class="app">
   <h1>🧮 Math Problems</h1>
+
+  <div class="lang-row">
+    <span class="lang-label">Language:</span>
+    <div class="lang-toggle">
+      <button class="lang-btn active" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="mk">MK</button>
+    </div>
+  </div>
 
   <div class="topic-row" id="topics">
     <button class="topic-btn active" data-topic="add">+ Addition</button>
@@ -250,6 +296,50 @@
 </div>
 
 <script>
+  const translations = {
+    en: {
+      title: '🧮 Math Problems',
+      langLabel: 'Language:',
+      add: '+ Addition',
+      sub: '− Subtraction',
+      mul: '× Multiplication',
+      div: '÷ Division',
+      digitLabel: 'Number size:',
+      single: '1–9',
+      double: '10–99',
+      both: 'Both',
+      score: 'Score',
+      attempted: 'Attempted',
+      streak: 'Streak',
+      check: 'Check',
+      next: 'Next problem →',
+      typeNumber: 'Type a number first!',
+      correctMsgs: ['Great job! 🎉', 'Correct! ✓', 'Awesome! ⭐', 'You got it! 🌟'],
+      wrongMsg: 'Not quite — the answer is {answer}. Keep trying!'
+    },
+    mk: {
+      title: '🧮 Математички проблеми',
+      langLabel: 'Јазик:',
+      add: '+ Собирање',
+      sub: '− Одземање',
+      mul: '× Множење',
+      div: '÷ Делење',
+      digitLabel: 'Големина на бројот:',
+      single: '1–9',
+      double: '10–99',
+      both: 'Двете',
+      score: 'Резултат',
+      attempted: 'Пробувани',
+      streak: 'Низа',
+      check: 'Провери',
+      next: 'Следен проблем →',
+      typeNumber: 'Прво внесете број!',
+      correctMsgs: ['Одлично! 🎉', 'Точно! ✓', 'Фантастично! ⭐', 'Го доби! 🌟'],
+      wrongMsg: 'Не баш — одговорот е {answer}. Продолжи да пробуваш!'
+    }
+  };
+
+  let currentLang = 'en';
   let correct = 0, total = 0, streak = 0;
   let currentAnswer = 0;
   let activeTopics = new Set(['add', 'sub', 'mul', 'div']);
@@ -275,6 +365,16 @@
     });
   });
 
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentLang = btn.dataset.lang;
+      updateTexts();
+      newProblem();
+    });
+  });
+
   document.getElementById('answer-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') {
       if (answered) newProblem();
@@ -286,6 +386,26 @@
     if (digitMode === 'single') return Math.floor(Math.random() * 9) + 1;
     if (digitMode === 'double') return Math.floor(Math.random() * 90) + 10;
     return Math.random() < 0.5 ? Math.floor(Math.random() * 9) + 1 : Math.floor(Math.random() * 90) + 10;
+  }
+
+  function updateTexts() {
+    const t = translations[currentLang];
+    document.title = t.title;
+    document.querySelector('h1').textContent = t.title;
+    document.querySelector('.lang-label').textContent = t.langLabel;
+    document.querySelector('[data-topic="add"]').innerHTML = t.add;
+    document.querySelector('[data-topic="sub"]').innerHTML = t.sub;
+    document.querySelector('[data-topic="mul"]').innerHTML = t.mul;
+    document.querySelector('[data-topic="div"]').innerHTML = t.div;
+    document.querySelector('.digit-label').textContent = t.digitLabel;
+    document.querySelector('[data-digit="single"]').textContent = t.single;
+    document.querySelector('[data-digit="double"]').textContent = t.double;
+    document.querySelector('[data-digit="both"]').textContent = t.both;
+    document.querySelectorAll('.score-label')[0].textContent = t.score;
+    document.querySelectorAll('.score-label')[1].textContent = t.attempted;
+    document.querySelectorAll('.score-label')[2].textContent = t.streak;
+    document.querySelector('.check-btn').textContent = t.check;
+    document.querySelector('.next-btn').textContent = t.next;
   }
 
   function newProblem() {
@@ -332,22 +452,23 @@
     if (answered) return;
     const val = parseInt(document.getElementById('answer-input').value, 10);
     if (isNaN(val)) {
-      document.getElementById('feedback').textContent = 'Type a number first!';
+      document.getElementById('feedback').textContent = translations[currentLang].typeNumber;
       return;
     }
     answered = true;
     total++;
 
     const fb = document.getElementById('feedback');
+    const t = translations[currentLang];
     if (val === currentAnswer) {
       correct++;
       streak++;
-      const msgs = ['Great job! 🎉', 'Correct! ✓', 'Awesome! ⭐', 'You got it! 🌟'];
+      const msgs = t.correctMsgs;
       fb.textContent = msgs[Math.floor(Math.random() * msgs.length)];
       fb.className = 'feedback correct';
     } else {
       streak = 0;
-      fb.textContent = 'Not quite — the answer is ' + currentAnswer + '. Keep trying!';
+      fb.textContent = t.wrongMsg.replace('{answer}', currentAnswer);
       fb.className = 'feedback wrong';
     }
 
@@ -358,6 +479,7 @@
   }
 
   newProblem();
+  updateTexts();
 </script>
 </body>
 </html>
