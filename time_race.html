@@ -228,6 +228,61 @@
       margin-bottom: 2rem;
     }
 
+    .accomplishment-msg {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      border-radius: 10px;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .accomplishment-msg.high {
+      background: #d4edda;
+      color: #0F6E56;
+      border: 1px solid #0F6E56;
+    }
+
+    .accomplishment-msg.low {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #856404;
+    }
+
+    .problems-list {
+      list-style: none;
+      padding: 0;
+      margin: 1.5rem 0;
+      max-height: 250px;
+      overflow-y: auto;
+      border: 1px solid #e5e5e5;
+      border-radius: 10px;
+      background: #fbfbfb;
+    }
+
+    .problems-list li {
+      padding: 8px 12px;
+      border-bottom: 1px solid #e5e5e5;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    .problems-list li:last-child {
+      border-bottom: none;
+    }
+
+    .problems-list li.correct {
+      color: #0F6E56;
+    }
+
+    .problems-list li.wrong {
+      color: #993C1D;
+    }
+
     .restart-btn {
       padding: 12px 24px;
       font-size: 16px;
@@ -303,6 +358,8 @@
     <h2>Race Complete!</h2>
     <div class="score-display" id="final-score">0/10</div>
     <div class="time-display" id="final-time">Time: 00:00</div>
+    <div class="accomplishment-msg" id="accomplishment-msg"></div>
+    <ul class="problems-list" id="problems-list"></ul>
     <button class="restart-btn" onclick="location.reload()">Race Again</button>
     <button class="back-btn" onclick="backToSettings()">Back to Settings</button>
   </div>
@@ -337,7 +394,18 @@
       restart: 'Race Again',
       back: 'Back',
       backSettings: 'Back to Settings',
-      timeLeft: 'Time Left: {time}'
+      timeLeft: 'Time Left: {time}',
+      achievement0: '💪 Keep practicing! You got 0/10 correct. Don\'t give up!',
+      achievement1: '💪 Keep practicing! You got 1/10 correct. Don\'t give up!',
+      achievement2: '💪 Keep practicing! You got 2/10 correct. Don\'t give up!',
+      achievement3: '💪 Keep practicing! You got 3/10 correct. Don\'t give up!',
+      achievement4: '💪 Keep practicing! You got 4/10 correct. Don\'t give up!',
+      achievement5: '💪 Keep practicing! You got 5/10 correct. Don\'t give up!',
+      achievement6: '👍 Good effort! You got 6/10 correct. You\'re on the right track!',
+      achievement7: '🌟 Very good! You got 7/10 correct. Great job!',
+      achievement8: '✨ Excellent! You got 8/10 correct. Fantastic work!',
+      achievement9: '🚀 Outstanding! You got 9/10 correct. Almost perfect!',
+      achievement10: '🏆 Perfect! You got 10/10 correct. Absolutely amazing!'
     },
     mk: {
       title: 'Математичка трка со време',
@@ -366,7 +434,18 @@
       restart: 'Тркај повторно',
       back: 'Назад',
       backSettings: 'Назад кон поставките',
-      timeLeft: 'Преостанато време: {time}'
+      timeLeft: 'Преостанато време: {time}',
+      achievement0: '💪 Продолжи со вежбање! Добивте 0/10 правилно. Не се предавај!',
+      achievement1: '💪 Продолжи со вежбање! Добивте 1/10 правилно. Не се предавај!',
+      achievement2: '💪 Продолжи со вежбање! Добивте 2/10 правилно. Не се предавај!',
+      achievement3: '💪 Продолжи со вежбање! Добивте 3/10 правилно. Не се предавај!',
+      achievement4: '💪 Продолжи со вежбање! Добивте 4/10 правилно. Не се предавај!',
+      achievement5: '💪 Продолжи со вежбање! Добивте 5/10 правилно. Не се предавај!',
+      achievement6: '👍 Добар напор! Добивте 6/10 правилно. Си на добар пат!',
+      achievement7: '🌟 Многу добро! Добивте 7/10 правилно. Одличен резултат!',
+      achievement8: '✨ Одлично! Добивте 8/10 правилно. Фантастична работа!',
+      achievement9: '🚀 Извонредно! Добивте 9/10 правилно. Скоро совршено!',
+      achievement10: '🏆 Совршено! Добивте 10/10 правилно. Апсолутно неверојатно!'
     }
   };
   let currentLang = 'en';
@@ -380,6 +459,7 @@
   let timeLeft = 60;
   let timerInterval = null;
   let raceCompleted = false;
+  let userAnswers = []; // Track if each problem was answered correctly
 
   // Load settings from URL parameters or localStorage
   const urlParams = new URLSearchParams(window.location.search);
@@ -437,6 +517,23 @@
     document.querySelectorAll('.race-container .back-btn, .results .back-btn').forEach(btn => {
       btn.textContent = t.backSettings;
     });
+
+    // Update accomplishment message if results are visible
+    if (document.getElementById('results').style.display === 'block') {
+      const achievementMsg = document.getElementById('accomplishment-msg');
+      if (achievementMsg.textContent) {
+        const score = correctAnswers;
+        const msgKey = 'achievement' + score;
+        const msgText = t[msgKey] || t.achievement0;
+        
+        if (score <= 5) {
+          achievementMsg.className = 'accomplishment-msg low';
+        } else {
+          achievementMsg.className = 'accomplishment-msg high';
+        }
+        achievementMsg.textContent = msgText;
+      }
+    }
   }
 
   updateRaceTexts();
@@ -610,6 +707,7 @@
     correctAnswers = 0;
     timeLeft = 60;
     raceCompleted = false;
+    userAnswers = []; // Reset user answers tracking
 
     document.querySelector('.settings').style.display = 'none';
     document.getElementById('race-container').style.display = 'block';
@@ -647,7 +745,8 @@
     const correctAnswer = raceProblems[currentProblemIndex].answer;
     const t = translations[currentLang];
 
-    if (userAnswer === correctAnswer) {
+    const isCorrect = userAnswer === correctAnswer;
+    if (isCorrect) {
       correctAnswers++;
       document.getElementById('feedback').textContent = t.correct;
       document.getElementById('feedback').className = 'feedback correct';
@@ -655,6 +754,12 @@
       document.getElementById('feedback').textContent = t.wrong;
       document.getElementById('feedback').className = 'feedback wrong';
     }
+
+    // Track this answer
+    userAnswers.push({
+      correct: isCorrect,
+      userAnswer: userAnswer
+    });
 
     setTimeout(() => {
       currentProblemIndex++;
@@ -686,7 +791,35 @@
 
     document.getElementById('final-score').textContent = t.score.replace('{correct}', correctAnswers);
     document.getElementById('final-time').textContent = t.time.replace('{time}', `${minutes}:${seconds}`);
+    
+    // Show problems list
+    const problemsList = document.getElementById('problems-list');
+    problemsList.innerHTML = '';
+    raceProblems.forEach((problem, index) => {
+      const li = document.createElement('li');
+      const isCorrect = userAnswers[index] && userAnswers[index].correct;
+      li.className = isCorrect ? 'correct' : 'wrong';
+      li.textContent = `${isCorrect ? '✅' : '❌'} ${problem.question} = ${problem.answer}`;
+      problemsList.appendChild(li);
+    });
+
+    // Show accomplishment message based on score
+    const achievementMsg = document.getElementById('accomplishment-msg');
+    const score = correctAnswers;
+    const msgKey = 'achievement' + score;
+    const msgText = t[msgKey] || t.achievement0;
+    
+    if (score <= 5) {
+      achievementMsg.className = 'accomplishment-msg low';
+    } else {
+      achievementMsg.className = 'accomplishment-msg high';
+    }
+    achievementMsg.textContent = msgText;
+
     document.querySelector('.restart-btn').textContent = t.restart;
+    document.querySelectorAll('.results .back-btn').forEach(btn => {
+      btn.textContent = t.backSettings;
+    });
   }
 </script>
 </body>
