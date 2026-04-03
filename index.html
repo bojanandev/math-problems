@@ -29,7 +29,29 @@
       color: #1a1a1a;
       margin-bottom: 1.75rem;
     }
+    .options-toggle {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
 
+    .options-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1.5px solid #ccc;
+      background: #fff;
+      color: #555;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .options-btn:hover {
+      background: #f0f0f0;
+    }
+
+    .options-container {
+      transition: all 0.3s ease;
+    }
     .topic-row {
       display: flex;
       gap: 8px;
@@ -318,41 +340,69 @@
       text-align: left;
       font-size: 14px;
     }
+
+    .race-section {
+      margin-top: 2rem;
+      text-align: center;
+    }
+
+    .race-btn {
+      padding: 12px 24px;
+      border-radius: 10px;
+      border: 1.5px solid #1D9E75;
+      background: #1D9E75;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+
+    .race-btn:hover {
+      background: #0F6E56;
+      border-color: #0F6E56;
+    }
   </style>
 </head>
 <body>
 <div class="app">
   <h1>🧮 Math Problems</h1>
 
-  <div class="lang-row">
-    <span class="lang-label">Language:</span>
-    <div class="lang-toggle">
-      <button class="lang-btn active" data-lang="en">EN</button>
-      <button class="lang-btn" data-lang="mk">MK</button>
+  <div class="options-toggle">
+    <button class="options-btn" onclick="toggleOptions()">⚙️ Options</button>
+  </div>
+
+  <div class="options-container" id="options-container">
+    <div class="lang-row">
+      <span class="lang-label">Language:</span>
+      <div class="lang-toggle">
+        <button class="lang-btn active" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="mk">MK</button>
+      </div>
     </div>
-  </div>
 
-  <div class="diff-row">
-    <span class="diff-label">Difficulty:</span>
-    <div class="diff-toggle">
-      <button class="diff-btn active" data-diff="beginner">Beginner</button>
-      <button class="diff-btn" data-diff="advanced">Advanced</button>
+    <div class="diff-row">
+      <span class="diff-label">Difficulty:</span>
+      <div class="diff-toggle">
+        <button class="diff-btn active" data-diff="beginner">Beginner</button>
+        <button class="diff-btn" data-diff="advanced">Advanced</button>
+      </div>
     </div>
-  </div>
 
-  <div class="topic-row" id="topics">
-    <button class="topic-btn active" data-topic="add">+ Addition</button>
-    <button class="topic-btn active" data-topic="sub">− Subtraction</button>
-    <button class="topic-btn active" data-topic="mul">× Multiplication</button>
-    <button class="topic-btn active" data-topic="div">÷ Division</button>
-  </div>
+    <div class="topic-row" id="topics">
+      <button class="topic-btn active" data-topic="add">+ Addition</button>
+      <button class="topic-btn active" data-topic="sub">− Subtraction</button>
+      <button class="topic-btn active" data-topic="mul">× Multiplication</button>
+      <button class="topic-btn active" data-topic="div">÷ Division</button>
+    </div>
 
-  <div class="digit-row">
-    <span class="digit-label">Number size:</span>
-    <div class="digit-toggle">
-      <button class="digit-btn active" data-digit="single">1–9</button>
-      <button class="digit-btn" data-digit="double">10–99</button>
-      <button class="digit-btn" data-digit="both">Both</button>
+    <div class="digit-row">
+      <span class="digit-label">Number size:</span>
+      <div class="digit-toggle">
+        <button class="digit-btn active" data-digit="single">1–9</button>
+        <button class="digit-btn" data-digit="double">10–99</button>
+        <button class="digit-btn" data-digit="both">Both</button>
+      </div>
     </div>
   </div>
 
@@ -385,6 +435,10 @@
     <button class="history-btn" onclick="toggleHistory()">Last 10 <span id="history-score"></span></button>
     <ul id="history-list" class="history-list" style="display: none;"></ul>
   </div>
+
+  <div class="race-section">
+    <button class="race-btn" onclick="startTimeRace()">Time Race</button>
+  </div>
 </div>
 
 <script>
@@ -414,7 +468,9 @@
       history: 'History',
       noHistory: 'No problems solved yet.',
       lastTen: 'Last 10',
-      scoreText: 'Score: {correct}/{total}'
+      scoreText: 'Score: {correct}/{total}',
+      options: 'Options',
+      timeRace: 'Time Race'
     },
     mk: {
       title: '🧮 Математички проблеми',
@@ -441,7 +497,9 @@
       history: 'Историја',
       noHistory: 'Сè уште нема решени проблеми.',
       lastTen: 'Последни 10',
-      scoreText: 'Резултат: {correct}/{total}'
+      scoreText: 'Резултат: {correct}/{total}',
+      options: 'Поставки',
+      timeRace: 'Трка со време'
     }
   };
 
@@ -527,6 +585,8 @@
     document.querySelector('.check-btn').textContent = t.check;
     document.querySelector('.next-btn').textContent = t.next;
     document.querySelector('.history-btn').innerHTML = t.lastTen + ' <span id="history-score"></span>';
+    document.querySelector('.options-btn').textContent = '⚙️ ' + t.options;
+    document.querySelector('.race-btn').textContent = t.timeRace;
     updateHistoryDisplay();
   }
 
@@ -558,9 +618,20 @@
     }
   }
 
-  function toggleHistory() {
-    const list = document.getElementById('history-list');
-    list.style.display = list.style.display === 'none' ? 'block' : 'none';
+  function toggleOptions() {
+    const container = document.getElementById('options-container');
+    const isHidden = container.style.display === 'none';
+    container.style.display = isHidden ? 'block' : 'none';
+  }
+
+  function startTimeRace() {
+    const params = new URLSearchParams({
+      lang: currentLang,
+      difficulty: currentDifficulty,
+      digits: digitMode,
+      topics: [...activeTopics].join(',')
+    });
+    window.location.href = `time_race.html?${params.toString()}`;
   }
 
   function newProblem() {
