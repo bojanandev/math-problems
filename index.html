@@ -573,8 +573,16 @@
 
     if (topic === 'add') {
       if (currentDifficulty === 'beginner') {
-        a = Math.floor(Math.random() * 50) + 1;
-        b = Math.floor(Math.random() * (100 - a)) + 1;
+        if (digitMode === 'single') {
+          a = Math.floor(Math.random() * 5) + 1;
+          b = Math.floor(Math.random() * (10 - a)) + 1;
+        } else if (digitMode === 'double') {
+          a = Math.floor(Math.random() * 50) + 1;
+          b = Math.floor(Math.random() * (100 - a)) + 1;
+        } else { // both
+          a = Math.random() < 0.5 ? Math.floor(Math.random() * 5) + 1 : Math.floor(Math.random() * 50) + 1;
+          b = a <= 5 ? Math.floor(Math.random() * (10 - a)) + 1 : Math.floor(Math.random() * (100 - a)) + 1;
+        }
       } else {
         a = randNum(); b = randNum();
       }
@@ -583,8 +591,16 @@
       currentAnswer = a + b;
     } else if (topic === 'sub') {
       if (currentDifficulty === 'beginner') {
-        a = Math.floor(Math.random() * 50) + 1;
-        b = Math.floor(Math.random() * a) + 1;
+        if (digitMode === 'single') {
+          a = Math.floor(Math.random() * 5) + 1;
+          b = Math.floor(Math.random() * a) + 1;
+        } else if (digitMode === 'double') {
+          a = Math.floor(Math.random() * 50) + 1;
+          b = Math.floor(Math.random() * a) + 1;
+        } else { // both
+          a = Math.random() < 0.5 ? Math.floor(Math.random() * 5) + 1 : Math.floor(Math.random() * 50) + 1;
+          b = Math.floor(Math.random() * a) + 1;
+        }
       } else {
         a = randNum(); b = randNum();
         if (b > a) { let tmp = a; a = b; b = tmp; }
@@ -596,7 +612,13 @@
     } else if (topic === 'mul') {
       if (currentDifficulty === 'beginner') {
         a = specials[Math.floor(Math.random() * specials.length)];
-        b = Math.floor(Math.random() * 10) + 1;
+        if (digitMode === 'single') {
+          b = Math.floor(Math.random() * 9) + 1;
+        } else if (digitMode === 'double') {
+          b = Math.floor(Math.random() * 10) + 1;
+        } else { // both
+          b = Math.random() < 0.5 ? Math.floor(Math.random() * 9) + 1 : Math.floor(Math.random() * 10) + 1;
+        }
       } else {
         a = digitMode === 'double' ? Math.floor(Math.random() * 11) + 2 : Math.floor(Math.random() * 9) + 1;
         b = digitMode === 'double' ? Math.floor(Math.random() * 11) + 2 : Math.floor(Math.random() * 9) + 1;
@@ -608,8 +630,16 @@
     } else {
       if (currentDifficulty === 'beginner') {
         const divisor = specials[Math.floor(Math.random() * specials.length)];
-        const ans = Math.floor(Math.random() * 10) + 1;
-        a = divisor * ans;
+        if (digitMode === 'single') {
+          const ans = Math.floor(Math.random() * 9) + 1;
+          a = divisor * ans;
+        } else if (digitMode === 'double') {
+          const ans = Math.floor(Math.random() * 10) + 1;
+          a = divisor * ans;
+        } else { // both
+          const ans = Math.random() < 0.5 ? Math.floor(Math.random() * 9) + 1 : Math.floor(Math.random() * 10) + 1;
+          a = divisor * ans;
+        }
         baseQuestion = a + ' ÷ ' + divisor;
         q = baseQuestion + ' = ?';
         currentAnswer = ans;
