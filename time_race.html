@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Math Time Race</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #f0f4f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 520px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 26px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 1.75rem;
+    }
+
+    .settings {
+      background: #fff;
+      border-radius: 16px;
+      padding: 2rem 1.5rem 1rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid #e5e5e5;
+    }
+
+    .settings h2 {
+      text-align: center;
+      font-size: 20px;
+      margin-bottom: 1rem;
+      color: #1a1a1a;
+    }
+
+    .lang-row, .diff-row, .topic-row, .digit-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .lang-label, .diff-label, .digit-label {
+      font-size: 14px;
+      color: #888;
+    }
+
+    .lang-toggle, .diff-toggle, .digit-toggle {
+      display: flex;
+      background: #fff;
+      border: 1.5px solid #ccc;
+      border-radius: 99px;
+      padding: 3px;
+      gap: 3px;
+    }
+
+    .lang-btn, .diff-btn, .digit-btn, .topic-btn {
+      padding: 6px 16px;
+      border-radius: 99px;
+      border: none;
+      background: transparent;
+      color: #555;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .lang-btn.active, .diff-btn.active, .digit-btn.active, .topic-btn.active {
+      background: #1D9E75;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .topic-row {
+      gap: 8px;
+    }
+
+    .topic-btn {
+      padding: 8px 18px;
+    }
+
+    .start-btn {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: none;
+      background: #1D9E75;
+      color: #fff;
+      cursor: pointer;
+      font-weight: 600;
+      transition: opacity 0.15s;
+      margin-top: 1rem;
+    }
+
+    .start-btn:hover { opacity: 0.88; }
+
+    .back-btn {
+      width: 100%;
+      padding: 10px;
+      font-size: 14px;
+      border-radius: 10px;
+      border: 1.5px solid #ccc;
+      background: #fff;
+      color: #555;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.15s;
+      margin-top: 0.5rem;
+    }
+
+    .back-btn:hover { background: #f0f0f0; }
+
+    .race-container {
+      background: #fff;
+      border-radius: 16px;
+      padding: 2rem 1.5rem;
+      text-align: center;
+      border: 1px solid #e5e5e5;
+      display: none;
+    }
+
+    .progress {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 1rem;
+    }
+
+    .timer {
+      font-size: 24px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 1rem;
+    }
+
+    .problem-text {
+      font-size: 40px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 1.75rem;
+      letter-spacing: -0.5px;
+    }
+
+    .answer-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .answer-row input {
+      width: 120px;
+      font-size: 22px;
+      text-align: center;
+      padding: 10px 0;
+      border: 1.5px solid #ccc;
+      border-radius: 10px;
+      background: #f9f9f9;
+      color: #1a1a1a;
+      outline: none;
+      transition: box-shadow 0.15s, border-color 0.15s;
+    }
+
+    .answer-row input:focus {
+      border-color: #1D9E75;
+      box-shadow: 0 0 0 3px rgba(29, 158, 117, 0.15);
+    }
+
+    .check-btn {
+      padding: 10px 24px;
+      font-size: 15px;
+      border-radius: 10px;
+      border: none;
+      background: #1D9E75;
+      color: #fff;
+      cursor: pointer;
+      font-weight: 600;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    .check-btn:hover { opacity: 0.88; }
+    .check-btn:active { transform: scale(0.97); }
+
+    .feedback {
+      font-size: 15px;
+      font-weight: 600;
+      margin-top: 1.25rem;
+      min-height: 24px;
+    }
+
+    .feedback.correct { color: #0F6E56; }
+    .feedback.wrong   { color: #993C1D; }
+
+    .results {
+      display: none;
+      text-align: center;
+    }
+
+    .results h2 {
+      font-size: 24px;
+      margin-bottom: 1rem;
+    }
+
+    .score-display {
+      font-size: 48px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 1rem;
+    }
+
+    .time-display {
+      font-size: 20px;
+      color: #666;
+      margin-bottom: 2rem;
+    }
+
+    .restart-btn {
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: 1.5px solid #ccc;
+      background: transparent;
+      color: #555;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .restart-btn:hover {
+      background: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <h1>🧮 Math Time Race</h1>
+
+  <div class="settings">
+    <h2>Race Settings</h2>
+
+    <div class="lang-row">
+      <span class="lang-label">Language:</span>
+      <div class="lang-toggle">
+        <button class="lang-btn active" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="mk">MK</button>
+      </div>
+    </div>
+
+    <div class="diff-row">
+      <span class="diff-label">Difficulty:</span>
+      <div class="diff-toggle">
+        <button class="diff-btn active" data-diff="beginner">Beginner</button>
+        <button class="diff-btn" data-diff="advanced">Advanced</button>
+      </div>
+    </div>
+
+    <div class="topic-row" id="topics">
+      <button class="topic-btn active" data-topic="add">+ Addition</button>
+      <button class="topic-btn active" data-topic="sub">− Subtraction</button>
+      <button class="topic-btn active" data-topic="mul">× Multiplication</button>
+      <button class="topic-btn active" data-topic="div">÷ Division</button>
+    </div>
+
+    <div class="digit-row">
+      <span class="digit-label">Number size:</span>
+      <div class="digit-toggle">
+        <button class="digit-btn active" data-digit="single">1–9</button>
+        <button class="digit-btn" data-digit="double">10–99</button>
+        <button class="digit-btn" data-digit="both">Both</button>
+      </div>
+    </div>
+
+    <button class="start-btn" onclick="startRace()">Start Time Race</button>
+    <button class="back-btn" onclick="goBackToIndex()">Back</button>
+  </div>
+
+  <div class="race-container" id="race-container">
+    <div class="progress" id="progress">Problem 1 of 10</div>
+    <div class="timer" id="timer">01:00</div>
+    <div class="problem-text" id="problem">?</div>
+    <div class="answer-row">
+      <input type="number" id="answer-input" placeholder="?" autocomplete="off" />
+      <button class="check-btn" onclick="checkAnswer()">Check</button>
+    </div>
+    <div class="feedback" id="feedback"></div>
+    <button class="back-btn" onclick="backToSettings()">Back to Settings</button>
+  </div>
+
+  <div class="results" id="results">
+    <h2>Race Complete!</h2>
+    <div class="score-display" id="final-score">0/10</div>
+    <div class="time-display" id="final-time">Time: 00:00</div>
+    <button class="restart-btn" onclick="location.reload()">Race Again</button>
+    <button class="back-btn" onclick="backToSettings()">Back to Settings</button>
+  </div>
+</div>
+
+<script>
+  const translations = {
+    en: {
+      title: 'Math Time Race',
+      settings: 'Race Settings',
+      langLabel: 'Language:',
+      diffLabel: 'Difficulty:',
+      beginner: 'Beginner',
+      advanced: 'Advanced',
+      add: '+ Addition',
+      sub: '− Subtraction',
+      mul: '× Multiplication',
+      div: '÷ Division',
+      digitLabel: 'Number size:',
+      single: '1–9',
+      double: '10–99',
+      both: 'Both',
+      start: 'Start Time Race',
+      progress: 'Problem {current} of 10',
+      check: 'Check',
+      correct: 'Correct!',
+      wrong: 'Wrong!',
+      complete: 'Race Complete!',
+      timeout: 'Time\'s Up!',
+      score: '{correct}/10',
+      time: 'Time: {time}',
+      restart: 'Race Again',
+      back: 'Back',
+      backSettings: 'Back to Settings',
+      timeLeft: 'Time Left: {time}'
+    },
+    mk: {
+      title: 'Математичка трка со време',
+      settings: 'Поставки за трка',
+      langLabel: 'Јазик:',
+      diffLabel: 'Тежина:',
+      beginner: 'Почетник',
+      advanced: 'Напреден',
+      add: '+ Собирање',
+      sub: '− Одземање',
+      mul: '× Множење',
+      div: '÷ Делење',
+      digitLabel: 'Големина на бројот:',
+      single: '1–9',
+      double: '10–99',
+      both: 'Двете',
+      start: 'Започни трка со време',
+      progress: 'Проблем {current} од 10',
+      check: 'Провери',
+      correct: 'Точно!',
+      wrong: 'Погрешно!',
+      complete: 'Трката заврши!',
+      timeout: 'Времето истече!',
+      score: '{correct}/10',
+      time: 'Време: {time}',
+      restart: 'Тркај повторно',
+      back: 'Назад',
+      backSettings: 'Назад кон поставките',
+      timeLeft: 'Преостанато време: {time}'
+    }
+  };
+  let currentLang = 'en';
+  let currentDifficulty = 'beginner';
+  let digitMode = 'single';
+  let activeTopics = new Set(['add', 'sub', 'mul', 'div']);
+
+  let raceProblems = [];
+  let currentProblemIndex = 0;
+  let correctAnswers = 0;
+  let timeLeft = 60;
+  let timerInterval = null;
+  let raceCompleted = false;
+
+  // Load settings from URL parameters or localStorage
+  const urlParams = new URLSearchParams(window.location.search);
+  currentLang = urlParams.get('lang') || localStorage.getItem('mathRaceLang') || 'en';
+  currentDifficulty = urlParams.get('difficulty') || localStorage.getItem('mathRaceDifficulty') || 'beginner';
+  digitMode = urlParams.get('digits') || localStorage.getItem('mathRaceDigits') || 'single';
+  const topicsParam = urlParams.get('topics');
+  if (topicsParam) {
+    activeTopics = new Set(topicsParam.split(','));
+  } else {
+    const savedTopics = localStorage.getItem('mathRaceTopics');
+    if (savedTopics) {
+      activeTopics = new Set(JSON.parse(savedTopics));
+    }
+  }
+
+  // Update UI to reflect loaded settings
+  document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.diff-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.digit-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.topic-btn').forEach(btn => btn.classList.remove('active'));
+
+  document.querySelector(`[data-lang="${currentLang}"]`).classList.add('active');
+  document.querySelector(`[data-diff="${currentDifficulty}"]`).classList.add('active');
+  document.querySelector(`[data-digit="${digitMode}"]`).classList.add('active');
+  activeTopics.forEach(topic => {
+    document.querySelector(`[data-topic="${topic}"]`).classList.add('active');
+  });
+
+  function updateRaceTexts() {
+    const t = translations[currentLang];
+    document.title = t.title;
+    document.querySelector('h1').textContent = t.title;
+    document.querySelector('.settings h2').textContent = t.settings;
+    document.querySelector('.lang-label').textContent = t.langLabel;
+    document.querySelector('.diff-label').textContent = t.diffLabel;
+    document.querySelector('[data-diff="beginner"]').textContent = t.beginner;
+    document.querySelector('[data-diff="advanced"]').textContent = t.advanced;
+    document.querySelector('[data-topic="add"]').textContent = t.add;
+    document.querySelector('[data-topic="sub"]').textContent = t.sub;
+    document.querySelector('[data-topic="mul"]').textContent = t.mul;
+    document.querySelector('[data-topic="div"]').textContent = t.div;
+    document.querySelector('.digit-label').textContent = t.digitLabel;
+    document.querySelector('[data-digit="single"]').textContent = t.single;
+    document.querySelector('[data-digit="double"]').textContent = t.double;
+    document.querySelector('[data-digit="both"]').textContent = t.both;
+    document.querySelector('.start-btn').textContent = t.start;
+    document.querySelector('.check-btn').textContent = t.check;
+    document.querySelector('.restart-btn').textContent = t.restart;
+    // Settings screen back button
+    const settingsBack = document.querySelector('.settings .back-btn');
+    if (settingsBack) settingsBack.textContent = t.back;
+
+    // Race and results back buttons
+    document.querySelectorAll('.race-container .back-btn, .results .back-btn').forEach(btn => {
+      btn.textContent = t.backSettings;
+    });
+  }
+
+  updateRaceTexts();
+
+  // Event listeners
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentLang = btn.dataset.lang;
+      localStorage.setItem('mathRaceLang', currentLang);
+      updateRaceTexts();
+    });
+  });
+
+  document.querySelectorAll('.diff-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentDifficulty = btn.dataset.diff;
+      localStorage.setItem('mathRaceDifficulty', currentDifficulty);
+    });
+  });
+
+  document.querySelectorAll('.topic-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const t = btn.dataset.topic;
+      if (activeTopics.has(t)) {
+        if (activeTopics.size > 1) {
+          activeTopics.delete(t);
+          btn.classList.remove('active');
+        }
+      } else {
+        activeTopics.add(t);
+        btn.classList.add('active');
+      }
+      localStorage.setItem('mathRaceTopics', JSON.stringify([...activeTopics]));
+    });
+  });
+
+  document.querySelectorAll('.digit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.digit-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      digitMode = btn.dataset.digit;
+      localStorage.setItem('mathRaceDigits', digitMode);
+    });
+  });
+
+  document.getElementById('answer-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      checkAnswer();
+    }
+  });
+
+  function randNum() {
+    if (digitMode === 'single') return Math.floor(Math.random() * 9) + 1;
+    if (digitMode === 'double') return Math.floor(Math.random() * 90) + 10;
+    return Math.random() < 0.5 ? Math.floor(Math.random() * 9) + 1 : Math.floor(Math.random() * 90) + 10;
+  }
+
+  function goBackToIndex() {
+    window.location.href = 'index.html';
+  }
+
+  function backToSettings() {
+    clearInterval(timerInterval);
+    raceCompleted = false;
+    document.getElementById('race-container').style.display = 'none';
+    document.getElementById('results').style.display = 'none';
+    document.querySelector('.settings').style.display = 'block';
+  }
+
+  function generateProblems() {
+    raceProblems = [];
+    const specials = [2, 4, 5, 10];
+
+    for (let i = 0; i < 10; i++) {
+      const topics = [...activeTopics];
+      const topic = topics[Math.floor(Math.random() * topics.length)];
+      let a, b, q, baseQuestion, answer;
+
+      if (topic === 'add') {
+        if (currentDifficulty === 'beginner') {
+          if (digitMode === 'single') {
+            a = Math.floor(Math.random() * 5) + 1;
+            b = Math.floor(Math.random() * (10 - a)) + 1;
+          } else if (digitMode === 'double') {
+            a = Math.floor(Math.random() * 50) + 1;
+            b = Math.floor(Math.random() * (100 - a)) + 1;
+          } else {
+            a = Math.random() < 0.5 ? Math.floor(Math.random() * 5) + 1 : Math.floor(Math.random() * 50) + 1;
+            b = a <= 5 ? Math.floor(Math.random() * (10 - a)) + 1 : Math.floor(Math.random() * (100 - a)) + 1;
+          }
+        } else {
+          a = randNum(); b = randNum();
+        }
+        baseQuestion = a + ' + ' + b;
+        answer = a + b;
+      } else if (topic === 'sub') {
+        if (currentDifficulty === 'beginner') {
+          if (digitMode === 'single') {
+            a = Math.floor(Math.random() * 5) + 1;
+            b = Math.floor(Math.random() * a) + 1;
+          } else if (digitMode === 'double') {
+            a = Math.floor(Math.random() * 50) + 1;
+            b = Math.floor(Math.random() * a) + 1;
+          } else {
+            a = Math.random() < 0.5 ? Math.floor(Math.random() * 5) + 1 : Math.floor(Math.random() * 50) + 1;
+            b = Math.floor(Math.random() * a) + 1;
+          }
+        } else {
+          a = randNum(); b = randNum();
+          if (b > a) { let tmp = a; a = b; b = tmp; }
+        }
+        if (a === b) a++;
+        baseQuestion = a + ' − ' + b;
+        answer = a - b;
+      } else if (topic === 'mul') {
+        if (currentDifficulty === 'beginner') {
+          a = specials[Math.floor(Math.random() * specials.length)];
+          if (digitMode === 'single') {
+            b = Math.floor(Math.random() * 9) + 1;
+          } else if (digitMode === 'double') {
+            b = Math.floor(Math.random() * 10) + 1;
+          } else {
+            b = Math.random() < 0.5 ? Math.floor(Math.random() * 9) + 1 : Math.floor(Math.random() * 10) + 1;
+          }
+        } else {
+          a = digitMode === 'double' ? Math.floor(Math.random() * 11) + 2 : Math.floor(Math.random() * 9) + 1;
+          b = digitMode === 'double' ? Math.floor(Math.random() * 11) + 2 : Math.floor(Math.random() * 9) + 1;
+          if (digitMode === 'both' && Math.random() < 0.5) a = Math.floor(Math.random() * 90) + 10;
+        }
+        baseQuestion = a + ' × ' + b;
+        answer = a * b;
+      } else {
+        if (currentDifficulty === 'beginner') {
+          const divisor = specials[Math.floor(Math.random() * specials.length)];
+          let ans;
+          if (digitMode === 'single') {
+            ans = Math.floor(Math.random() * 9) + 1;
+          } else if (digitMode === 'double') {
+            ans = Math.floor(Math.random() * 10) + 1;
+          } else {
+            ans = Math.random() < 0.5 ? Math.floor(Math.random() * 9) + 1 : Math.floor(Math.random() * 10) + 1;
+          }
+          a = divisor * ans;
+          baseQuestion = a + ' ÷ ' + divisor;
+          answer = ans;
+        } else {
+          const maxDiv = digitMode === 'double' ? 11 : 9;
+          const maxAns = digitMode === 'double' ? 12 : 9;
+          const divisor = Math.floor(Math.random() * maxDiv) + 2;
+          const ans = Math.floor(Math.random() * maxAns) + 1;
+          a = divisor * ans;
+          baseQuestion = a + ' ÷ ' + divisor;
+          answer = ans;
+        }
+      }
+
+      raceProblems.push({
+        question: baseQuestion + ' = ?',
+        answer: answer
+      });
+    }
+  }
+
+  function startRace() {
+    generateProblems();
+    currentProblemIndex = 0;
+    correctAnswers = 0;
+    timeLeft = 60;
+    raceCompleted = false;
+
+    document.querySelector('.settings').style.display = 'none';
+    document.getElementById('race-container').style.display = 'block';
+
+    showCurrentProblem();
+    startTimer();
+  }
+
+  function showCurrentProblem() {
+    const t = translations[currentLang];
+    document.getElementById('progress').textContent = t.progress.replace('{current}', currentProblemIndex + 1);
+    document.getElementById('problem').textContent = raceProblems[currentProblemIndex].question;
+    document.getElementById('answer-input').value = '';
+    document.getElementById('answer-input').focus();
+    document.getElementById('feedback').textContent = '';
+    document.getElementById('feedback').className = 'feedback';
+  }
+
+  function startTimer() {
+    const t = translations[currentLang];
+    timerInterval = setInterval(() => {
+      timeLeft--;
+      const minutes = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+      const seconds = (timeLeft % 60).toString().padStart(2, '0');
+      document.getElementById('timer').textContent = t.timeLeft.replace('{time}', `${minutes}:${seconds}`);
+
+      if (timeLeft <= 0) {
+        endRace(true); // true indicates timeout
+      }
+    }, 1000);
+  }
+
+  function checkAnswer() {
+    const userAnswer = parseInt(document.getElementById('answer-input').value, 10);
+    const correctAnswer = raceProblems[currentProblemIndex].answer;
+    const t = translations[currentLang];
+
+    if (userAnswer === correctAnswer) {
+      correctAnswers++;
+      document.getElementById('feedback').textContent = t.correct;
+      document.getElementById('feedback').className = 'feedback correct';
+    } else {
+      document.getElementById('feedback').textContent = t.wrong;
+      document.getElementById('feedback').className = 'feedback wrong';
+    }
+
+    setTimeout(() => {
+      currentProblemIndex++;
+      if (currentProblemIndex >= 10) {
+        raceCompleted = true;
+        endRace(false); // false indicates completed normally
+      } else {
+        showCurrentProblem();
+      }
+    }, 1000);
+  }
+
+  function endRace(timedOut = false) {
+    clearInterval(timerInterval);
+    const t = translations[currentLang];
+
+    document.getElementById('race-container').style.display = 'none';
+    document.getElementById('results').style.display = 'block';
+
+    if (timedOut) {
+      document.querySelector('#results h2').textContent = t.timeout;
+    } else {
+      document.querySelector('#results h2').textContent = t.complete;
+    }
+
+    const timeUsed = 60 - timeLeft;
+    const minutes = Math.floor(timeUsed / 60).toString().padStart(2, '0');
+    const seconds = (timeUsed % 60).toString().padStart(2, '0');
+
+    document.getElementById('final-score').textContent = t.score.replace('{correct}', correctAnswers);
+    document.getElementById('final-time').textContent = t.time.replace('{time}', `${minutes}:${seconds}`);
+    document.querySelector('.restart-btn').textContent = t.restart;
+  }
+</script>
+</body>
+</html>
