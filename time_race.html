@@ -463,8 +463,15 @@
 
   // Load settings from URL parameters or localStorage
   const urlParams = new URLSearchParams(window.location.search);
-  currentLang = urlParams.get('lang') || localStorage.getItem('mathRaceLang') || 'en';
-  currentDifficulty = urlParams.get('difficulty') || localStorage.getItem('mathRaceDifficulty') || 'beginner';
+  const urlLang = urlParams.get('lang');
+  const urlDifficulty = urlParams.get('difficulty');
+  const storedLang = localStorage.getItem('mathRaceLang');
+  const storedDifficulty = localStorage.getItem('mathRaceDifficulty');
+  
+  // Use stored settings first, then URL params, then defaults
+  // But if URL params are the old defaults and no stored settings, use new defaults
+  currentLang = storedLang || (urlLang !== 'en' ? urlLang : null) || 'mk';
+  currentDifficulty = storedDifficulty || (urlDifficulty !== 'advanced' ? urlDifficulty : null) || 'beginner';
   digitMode = urlParams.get('digits') || localStorage.getItem('mathRaceDigits') || 'single';
   const topicsParam = urlParams.get('topics');
   if (topicsParam) {
