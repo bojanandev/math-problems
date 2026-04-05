@@ -225,6 +225,45 @@
       font-weight: 600;
     }
 
+    .unknown-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 1.5rem;
+      justify-content: center;
+    }
+
+    .unknown-label {
+      font-size: 14px;
+      color: #888;
+    }
+
+    .unknown-toggle {
+      display: flex;
+      background: #fff;
+      border: 1.5px solid #ccc;
+      border-radius: 99px;
+      padding: 3px;
+      gap: 3px;
+    }
+
+    .unknown-btn {
+      padding: 6px 16px;
+      border-radius: 99px;
+      border: none;
+      background: transparent;
+      color: #555;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .unknown-btn.active {
+      background: #1D9E75;
+      color: #fff;
+      font-weight: 600;
+    }
+
     .lang-row {
       display: flex;
       align-items: center;
@@ -405,6 +444,15 @@
         <button class="digit-btn" data-digit="both">Both</button>
       </div>
     </div>
+
+    <div class="unknown-row">
+      <span class="unknown-label">Unknown position:</span>
+      <div class="unknown-toggle">
+        <button class="unknown-btn" data-unknown="first">First number</button>
+        <button class="unknown-btn" data-unknown="second">Second number</button>
+        <button class="unknown-btn active" data-unknown="result">Result</button>
+      </div>
+    </div>
   </div>
 
   <div class="score-row">
@@ -458,6 +506,10 @@
       single: '1–9',
       double: '10–99',
       both: 'Both',
+      unknownLabel: 'Unknown position:',
+      first: 'First number',
+      second: 'Second number',
+      result: 'Result',
       score: 'Score',
       attempted: 'Attempted',
       streak: 'Streak',
@@ -487,6 +539,10 @@
       single: '1–9',
       double: '10–99',
       both: 'Двете',
+      unknownLabel: 'Позиција на непознатото:',
+      first: 'Прв број',
+      second: 'Втор број',
+      result: 'Резултат',
       score: 'Резултат',
       attempted: 'Пробувани',
       streak: 'Низа',
@@ -511,6 +567,7 @@
   let currentAnswer = 0;
   let activeTopics = new Set(['add', 'sub', 'mul', 'div']);
   let digitMode = 'single';
+  let unknownMode = 'result';
   let answered = false;
 
   document.querySelectorAll('.topic-btn').forEach(btn => {
@@ -528,6 +585,15 @@
       document.querySelectorAll('.digit-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       digitMode = btn.dataset.digit;
+      newProblem();
+    });
+  });
+
+  document.querySelectorAll('.unknown-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.unknown-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      unknownMode = btn.dataset.unknown;
       newProblem();
     });
   });
@@ -580,6 +646,10 @@
     document.querySelector('[data-digit="single"]').textContent = t.single;
     document.querySelector('[data-digit="double"]').textContent = t.double;
     document.querySelector('[data-digit="both"]').textContent = t.both;
+    document.querySelector('.unknown-label').textContent = t.unknownLabel;
+    document.querySelector('[data-unknown="first"]').textContent = t.first;
+    document.querySelector('[data-unknown="second"]').textContent = t.second;
+    document.querySelector('[data-unknown="result"]').textContent = t.result;
     document.querySelectorAll('.score-label')[0].textContent = t.score;
     document.querySelectorAll('.score-label')[1].textContent = t.attempted;
     document.querySelectorAll('.score-label')[2].textContent = t.streak;
@@ -630,7 +700,8 @@
       lang: currentLang,
       difficulty: currentDifficulty,
       digits: digitMode,
-      topics: [...activeTopics].join(',')
+      topics: [...activeTopics].join(','),
+      unknown: unknownMode
     });
     window.location.href = `time_race.html?${params.toString()}`;
   }
@@ -639,8 +710,9 @@
     answered = false;
     const topics = [...activeTopics];
     const topic = topics[Math.floor(Math.random() * topics.length)];
-    let a, b, q, baseQuestion;
+    let a, b, q, baseQuestion, displayQuestion;
 
+    // Beginner-level special factors: use only 2, 4, 5, and 10 for easy exact multiplication/division.
     const specials = [2, 4, 5, 10];
 
     if (topic === 'add') {
@@ -659,7 +731,6 @@
         a = randNum(); b = randNum();
       }
       baseQuestion = a + ' + ' + b;
-      q = baseQuestion + ' = ?';
       currentAnswer = a + b;
     } else if (topic === 'sub') {
       if (currentDifficulty === 'beginner') {
@@ -679,7 +750,6 @@
       }
       if (a === b) a++;
       baseQuestion = a + ' − ' + b;
-      q = baseQuestion + ' = ?';
       currentAnswer = a - b;
     } else if (topic === 'mul') {
       if (currentDifficulty === 'beginner') {
@@ -688,7 +758,7 @@
           b = Math.floor(Math.random() * 9) + 1;
         } else if (digitMode === 'double') {
           b = Math.floor(Math.random() * 10) + 1;
-        } else { // both
+        } else {
           b = Math.random() < 0.5 ? Math.floor(Math.random() * 9) + 1 : Math.floor(Math.random() * 10) + 1;
         }
       } else {
@@ -697,37 +767,58 @@
         if (digitMode === 'both' && Math.random() < 0.5) a = Math.floor(Math.random() * 90) + 10;
       }
       baseQuestion = a + ' × ' + b;
-      q = baseQuestion + ' = ?';
       currentAnswer = a * b;
     } else {
       if (currentDifficulty === 'beginner') {
         const divisor = specials[Math.floor(Math.random() * specials.length)];
+        let ans;
         if (digitMode === 'single') {
-          const ans = Math.floor(Math.random() * 9) + 1;
-          a = divisor * ans;
+          ans = Math.floor(Math.random() * 9) + 1;
         } else if (digitMode === 'double') {
-          const ans = Math.floor(Math.random() * 10) + 1;
-          a = divisor * ans;
-        } else { // both
-          const ans = Math.random() < 0.5 ? Math.floor(Math.random() * 9) + 1 : Math.floor(Math.random() * 10) + 1;
-          a = divisor * ans;
+          ans = Math.floor(Math.random() * 10) + 1;
+        } else {
+          ans = Math.random() < 0.5 ? Math.floor(Math.random() * 9) + 1 : Math.floor(Math.random() * 10) + 1;
         }
+        a = divisor * ans;
         baseQuestion = a + ' ÷ ' + divisor;
-        q = baseQuestion + ' = ?';
-        currentAnswer = ans;
+        b = divisor; // Set b for display logic consistency
+        currentAnswer = Math.floor(ans);
       } else {
         const maxDiv = digitMode === 'double' ? 11 : 9;
         const maxAns = digitMode === 'double' ? 12 : 9;
         const divisor = Math.floor(Math.random() * maxDiv) + 2;
         const ans = Math.floor(Math.random() * maxAns) + 1;
-        a = divisor * ans;
+        a = Math.floor(divisor * ans);
         baseQuestion = a + ' ÷ ' + divisor;
-        q = baseQuestion + ' = ?';
-        currentAnswer = ans;
+        b = divisor; // Set b for display logic consistency
+        currentAnswer = Math.floor(ans);
       }
     }
 
-    document.getElementById('problem').textContent = q;
+    // Create display question based on unknown position
+    if (unknownMode === 'first') {
+      if (topic === 'div') {
+        // For division, first number is the dividend (a)
+        displayQuestion = '? ÷ ' + b + ' = ' + currentAnswer;
+        currentAnswer = Math.floor(a);
+      } else {
+        displayQuestion = '? ' + baseQuestion.split(' ')[1] + ' ' + b + ' = ' + currentAnswer;
+        currentAnswer = Math.floor(a);
+      }
+    } else if (unknownMode === 'second') {
+      if (topic === 'div') {
+        // For division, second number is the divisor (b)
+        displayQuestion = a + ' ÷ ? = ' + currentAnswer;
+        currentAnswer = Math.floor(b);
+      } else {
+        displayQuestion = a + ' ' + baseQuestion.split(' ')[1] + ' ? = ' + currentAnswer;
+        currentAnswer = Math.floor(b);
+      }
+    } else { // result
+      displayQuestion = baseQuestion + ' = ?';
+    }
+
+    document.getElementById('problem').textContent = displayQuestion;
     document.getElementById('answer-input').value = '';
     document.getElementById('feedback').textContent = '';
     document.getElementById('feedback').className = 'feedback';

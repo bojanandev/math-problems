@@ -45,7 +45,7 @@
       color: #1a1a1a;
     }
 
-    .lang-row, .diff-row, .topic-row, .digit-row {
+    .lang-row, .diff-row, .topic-row, .digit-row, .unknown-row {
       display: flex;
       align-items: center;
       gap: 12px;
@@ -54,12 +54,12 @@
       flex-wrap: wrap;
     }
 
-    .lang-label, .diff-label, .digit-label {
+    .lang-label, .diff-label, .digit-label, .unknown-label {
       font-size: 14px;
       color: #888;
     }
 
-    .lang-toggle, .diff-toggle, .digit-toggle {
+    .lang-toggle, .diff-toggle, .digit-toggle, .unknown-toggle {
       display: flex;
       background: #fff;
       border: 1.5px solid #ccc;
@@ -68,7 +68,7 @@
       gap: 3px;
     }
 
-    .lang-btn, .diff-btn, .digit-btn, .topic-btn {
+    .lang-btn, .diff-btn, .digit-btn, .unknown-btn, .topic-btn {
       padding: 6px 16px;
       border-radius: 99px;
       border: none;
@@ -79,7 +79,7 @@
       transition: all 0.15s;
     }
 
-    .lang-btn.active, .diff-btn.active, .digit-btn.active, .topic-btn.active {
+    .lang-btn.active, .diff-btn.active, .digit-btn.active, .unknown-btn.active, .topic-btn.active {
       background: #1D9E75;
       color: #fff;
       font-weight: 600;
@@ -338,6 +338,15 @@
       </div>
     </div>
 
+    <div class="unknown-row">
+      <span class="unknown-label">Unknown position:</span>
+      <div class="unknown-toggle">
+        <button class="unknown-btn" data-unknown="first">First number</button>
+        <button class="unknown-btn" data-unknown="second">Second number</button>
+        <button class="unknown-btn active" data-unknown="result">Result</button>
+      </div>
+    </div>
+
     <button class="start-btn" onclick="startRace()">Start Time Race</button>
     <button class="back-btn" onclick="goBackToIndex()">Back</button>
   </div>
@@ -382,6 +391,10 @@
       single: '1–9',
       double: '10–99',
       both: 'Both',
+      unknownLabel: 'Unknown position:',
+      first: 'First number',
+      second: 'Second number',
+      result: 'Result',
       start: 'Start Time Race',
       progress: 'Problem {current} of 10',
       check: 'Check',
@@ -422,6 +435,10 @@
       single: '1–9',
       double: '10–99',
       both: 'Двете',
+      unknownLabel: 'Позиција на непознатото:',
+      first: 'Прв број',
+      second: 'Втор број',
+      result: 'Резултат',
       start: 'Започни трка со време',
       progress: 'Проблем {current} од 10',
       check: 'Провери',
@@ -451,6 +468,7 @@
   let currentLang = 'en';
   let currentDifficulty = 'beginner';
   let digitMode = 'single';
+  let unknownMode = 'result';
   let activeTopics = new Set(['add', 'sub', 'mul', 'div']);
 
   let raceProblems = [];
@@ -473,6 +491,7 @@
   currentLang = storedLang || (urlLang !== 'en' ? urlLang : null) || 'mk';
   currentDifficulty = storedDifficulty || (urlDifficulty !== 'advanced' ? urlDifficulty : null) || 'beginner';
   digitMode = urlParams.get('digits') || localStorage.getItem('mathRaceDigits') || 'single';
+  unknownMode = urlParams.get('unknown') || localStorage.getItem('mathRaceUnknown') || 'result';
   const topicsParam = urlParams.get('topics');
   if (topicsParam) {
     activeTopics = new Set(topicsParam.split(','));
@@ -487,11 +506,13 @@
   document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
   document.querySelectorAll('.diff-btn').forEach(btn => btn.classList.remove('active'));
   document.querySelectorAll('.digit-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.unknown-btn').forEach(btn => btn.classList.remove('active'));
   document.querySelectorAll('.topic-btn').forEach(btn => btn.classList.remove('active'));
 
   document.querySelector(`[data-lang="${currentLang}"]`).classList.add('active');
   document.querySelector(`[data-diff="${currentDifficulty}"]`).classList.add('active');
   document.querySelector(`[data-digit="${digitMode}"]`).classList.add('active');
+  document.querySelector(`[data-unknown="${unknownMode}"]`).classList.add('active');
   activeTopics.forEach(topic => {
     document.querySelector(`[data-topic="${topic}"]`).classList.add('active');
   });
@@ -513,6 +534,10 @@
     document.querySelector('[data-digit="single"]').textContent = t.single;
     document.querySelector('[data-digit="double"]').textContent = t.double;
     document.querySelector('[data-digit="both"]').textContent = t.both;
+    document.querySelector('.unknown-label').textContent = t.unknownLabel;
+    document.querySelector('[data-unknown="first"]').textContent = t.first;
+    document.querySelector('[data-unknown="second"]').textContent = t.second;
+    document.querySelector('[data-unknown="result"]').textContent = t.result;
     document.querySelector('.start-btn').textContent = t.start;
     document.querySelector('.check-btn').textContent = t.check;
     document.querySelector('.restart-btn').textContent = t.restart;
@@ -590,6 +615,15 @@
     });
   });
 
+  document.querySelectorAll('.unknown-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.unknown-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      unknownMode = btn.dataset.unknown;
+      localStorage.setItem('mathRaceUnknown', unknownMode);
+    });
+  });
+
   document.getElementById('answer-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') {
       checkAnswer();
@@ -616,6 +650,7 @@
 
   function generateProblems() {
     raceProblems = [];
+    // Beginner-level special factors: use only 2, 4, 5, and 10 for easy exact multiplication/division.
     const specials = [2, 4, 5, 10];
 
     for (let i = 0; i < 10; i++) {
@@ -687,22 +722,48 @@
           } else {
             ans = Math.random() < 0.5 ? Math.floor(Math.random() * 9) + 1 : Math.floor(Math.random() * 10) + 1;
           }
-          a = divisor * ans;
+          a = Math.floor(divisor * ans);
           baseQuestion = a + ' ÷ ' + divisor;
-          answer = ans;
+          b = divisor; // Set b for display logic consistency
+          answer = Math.floor(ans);
         } else {
           const maxDiv = digitMode === 'double' ? 11 : 9;
           const maxAns = digitMode === 'double' ? 12 : 9;
           const divisor = Math.floor(Math.random() * maxDiv) + 2;
           const ans = Math.floor(Math.random() * maxAns) + 1;
-          a = divisor * ans;
+          a = Math.floor(divisor * ans);
           baseQuestion = a + ' ÷ ' + divisor;
-          answer = ans;
+          b = divisor; // Set b for display logic consistency
+          answer = Math.floor(ans);
         }
       }
 
+      // Create display question based on unknown position
+      let displayQuestion;
+      if (unknownMode === 'first') {
+        if (topic === 'div') {
+          // For division, first number is the dividend (a)
+          displayQuestion = '? ÷ ' + b + ' = ' + answer;
+          answer = Math.floor(a);
+        } else {
+          displayQuestion = '? ' + baseQuestion.split(' ')[1] + ' ' + b + ' = ' + answer;
+          answer = Math.floor(a);
+        }
+      } else if (unknownMode === 'second') {
+        if (topic === 'div') {
+          // For division, second number is the divisor (b)
+          displayQuestion = a + ' ÷ ? = ' + answer;
+          answer = Math.floor(b);
+        } else {
+          displayQuestion = a + ' ' + baseQuestion.split(' ')[1] + ' ? = ' + answer;
+          answer = Math.floor(b);
+        }
+      } else { // result
+        displayQuestion = baseQuestion + ' = ?';
+      }
+
       raceProblems.push({
-        question: baseQuestion + ' = ?',
+        question: displayQuestion,
         answer: answer
       });
     }
@@ -806,7 +867,21 @@
       const li = document.createElement('li');
       const isCorrect = userAnswers[index] && userAnswers[index].correct;
       li.className = isCorrect ? 'correct' : 'wrong';
-      li.textContent = `${isCorrect ? '✅' : '❌'} ${problem.question} = ${problem.answer}`;
+      
+      // For the results, show the complete equation
+      let fullEquation;
+      if (unknownMode === 'first') {
+        // problem.question is "? op b = answer", so replace ? with answer
+        fullEquation = problem.question.replace('?', problem.answer);
+      } else if (unknownMode === 'second') {
+        // problem.question is "a op ? = answer", so replace ? with answer
+        fullEquation = problem.question.replace('?', problem.answer);
+      } else { // result
+        // problem.question is "a op b = ?", so replace ? with answer
+        fullEquation = problem.question.replace('?', problem.answer);
+      }
+      
+      li.textContent = `${isCorrect ? '✅' : '❌'} ${fullEquation}`;
       problemsList.appendChild(li);
     });
 
